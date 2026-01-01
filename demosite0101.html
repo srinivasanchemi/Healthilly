@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Healthilly India – Smart Pharma Demo</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(120deg, #4facfe, #00f2fe);
+}
+
+header {
+  background: white;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+header img { height: 45px; }
+header h1 { margin: 0; color: #ff7a00; }
+
+.page { display: none; padding: 20px; }
+.active { display: block; }
+
+.card {
+  background: white;
+  padding: 30px;
+  max-width: 750px;
+  margin: 30px auto;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+
+.center { text-align: center; }
+
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: none;
+  background: #4facfe;
+  color: white;
+  font-size: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+button:hover { background: #00c6ff; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: center;
+}
+
+.safe { background: #4caf50; color: white; padding: 5px 10px; border-radius: 5px; }
+.warning { background: #ffa500; color: white; padding: 5px 10px; border-radius: 5px; }
+.expired { background: #ff4d4d; color: white; padding: 5px 10px; border-radius: 5px; }
+
+video {
+  width: 100%;
+  border-radius: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <img src="healthilly.png" alt="Healthilly India Logo">
+  <h1>Healthilly India</h1>
+</header>
+
+<!-- LANDING -->
+<div id="landing" class="page active">
+  <div class="card center">
+    <h2>Smart Pharma System</h2>
+    <button onclick="showPage('customer')">Customer Login</button>
+    <button onclick="showPage('qrScan')">Scan QR Code</button>
+    <button onclick="showPage('pharmacy')">Pharmacy Login</button>
+  </div>
+</div>
+
+<!-- QR SCANNER ONLY -->
+<div id="qrScan" class="page">
+  <div class="card center">
+    <h2>Scan Medicine QR Code</h2>
+    <p>Point camera at QR label</p>
+    <video id="video" autoplay></video>
+    <button onclick="stopCamera(); showPage('landing')">Cancel</button>
+  </div>
+</div>
+
+<!-- QR RESULT + MEDICINE DETAILS -->
+<div id="qrResult" class="page">
+  <div class="card">
+    <h2>Medicine Verification</h2>
+
+    <p><b>Medicine Name:</b> <span id="medName"></span></p>
+    <p><b>Batch Number:</b> <span id="batch"></span></p>
+    <p><b>Manufacturing Date:</b> <span id="mfg"></span></p>
+    <p><b>Expiry Date:</b> <span id="exp"></span></p>
+    <p><b>Status:</b> <span id="status"></span></p>
+
+    <hr>
+
+    <p><b>Ingredients:</b> Acetaminophen</p>
+    <p><b>Side Effects:</b> Mild nausea (rare)</p>
+
+    <button onclick="showPage('dosage')">Dosage Reminder</button>
+    <button onclick="showPage('order')">Order Online</button>
+    <button onclick="showPage('landing')">Home</button>
+  </div>
+</div>
+
+<!-- DOSAGE -->
+<div id="dosage" class="page">
+  <div class="card">
+    <h2>Dosage Reminder</h2>
+    <p><b>3 Tablets Per Day</b></p>
+    <ul>
+      <li>🌅 Morning – 8:00 AM</li>
+      <li>🌞 Afternoon – 2:00 PM</li>
+      <li>🌙 Night – 8:00 PM</li>
+    </ul>
+    <p>Tablets Remaining: <b><span id="tabletCount">10</span></b></p>
+    <button onclick="takeMedicine()">Take Medicine</button>
+    <button onclick="showPage('qrResult')">Back</button>
+  </div>
+</div>
+
+<!-- ORDER -->
+<div id="order" class="page">
+  <div class="card">
+    <h2>Order Medicine</h2>
+    <p>Rate: ₹30 / strip</p>
+    <input type="number" id="qty" value="1" min="1" onchange="calcTotal()">
+    <p>Total: ₹<span id="total">30</span></p>
+
+    <h3>Nearby Pharmacies</h3>
+    <ul>
+      <li>City Care Pharmacy – 20 strips</li>
+      <li>HealthPlus Medicals – 15 strips</li>
+    </ul>
+
+    <button onclick="alert('Order placed successfully')">Place Order</button>
+    <button onclick="showPage('qrResult')">Back</button>
+  </div>
+</div>
+
+<!-- PHARMACY -->
+<div id="pharmacy" class="page">
+  <div class="card">
+    <h2>Pharmacy Dashboard</h2>
+    <table>
+      <tr><th>Medicine</th><th>Batch</th><th>MFG</th><th>EXP</th></tr>
+      <tr><td>Paracetamol</td><td>B102</td><td>2024</td><td>2026</td></tr>
+    </table>
+    <button onclick="showPage('landing')">Logout</button>
+  </div>
+</div>
+
+<script>
+let tablets = 10;
+let videoStream;
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'qrScan') startScan();
+}
+
+function takeMedicine() {
+  if (tablets > 0) {
+    tablets--;
+    document.getElementById("tabletCount").innerText = tablets;
+  }
+}
+
+function calcTotal() {
+  document.getElementById("total").innerText =
+    document.getElementById("qty").value * 30;
+}
+
+async function startScan() {
+  const video = document.getElementById("video");
+  videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+  video.srcObject = videoStream;
+
+  // Simulated QR detection
+  setTimeout(() => {
+    stopCamera();
+    populateQRResult();
+    showPage('qrResult');
+  }, 3000);
+}
+
+function stopCamera() {
+  if (videoStream) {
+    videoStream.getTracks().forEach(t => t.stop());
+  }
+}
+
+function populateQRResult() {
+  const expiryStatus = "safe"; // change to warning / expired for demo
+
+  document.getElementById("medName").innerText = "Paracetamol 500mg";
+  document.getElementById("batch").innerText = "B102";
+  document.getElementById("mfg").innerText = "01-01-2024";
+  document.getElementById("exp").innerText = "01-01-2026";
+
+  const statusEl = document.getElementById("status");
+  if (expiryStatus === "safe") {
+    statusEl.innerText = "Safe to Use";
+    statusEl.className = "safe";
+  } else if (expiryStatus === "warning") {
+    statusEl.innerText = "About to Expire";
+    statusEl.className = "warning";
+  } else {
+    statusEl.innerText = "Expired";
+    statusEl.className = "expired";
+  }
+}
+</script>
+
+</body>
+</html>
